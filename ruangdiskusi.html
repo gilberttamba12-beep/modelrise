@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RISE - Ruang Diskusi Saya</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; margin: 0; background: url('bg1.png') no-repeat center center fixed; background-size: cover; }
+    .overlay { position: relative; min-height: 100vh; width: 100%; background: linear-gradient(135deg, rgba(30, 27, 75, 0.9) 0%, rgba(49, 46, 129, 0.9) 100%); padding-top: 80px; padding-bottom: 40px; }
+    .card-glass { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px); }
+    .card-hover { transition: all 0.3s ease; }
+    .card-hover:hover { transform: translateY(-5px); box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15); }
+    .fade-in { animation: fadeIn 0.5s ease-out; }
+    .hidden { display: none !important; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex-shrink-0">
+          <a href="index.html" class="text-2xl font-black text-blue-600">RISE <span class="text-gray-700">| Langkah Awal</span></a>
+        </div>
+        <div class="hidden md:flex items-center gap-4">
+          <span class="text-gray-500 text-sm">Hai, <span id="username-display" class="font-semibold text-indigo-600"></span></span>
+          <a href="rise-form.html" class="bg-blue-600 text-white px-6 py-2.5 rounded-full text-base font-semibold hover:bg-blue-700 transition shadow-lg">Isi RISE</a>
+          <button id="logout-button" class="logout-btn text-red-600 px-4 py-2 rounded-full text-base font-semibold hover:bg-red-50 transition">Logout</button>
+        </div>
+        <div class="md:hidden">
+          <button id="mobile-menu-btn" class="text-gray-700 p-2 rounded-md hover:bg-gray-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-200">
+      <div class="px-4 py-4 space-y-3">
+        <a href="rise-form.html" class="block w-full bg-blue-600 text-white px-6 py-3 rounded-full text-center">Isi RISE</a>
+        <button id="mobile-logout" class="block w-full text-red-600 px-6 py-3 rounded-full text-center">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="overlay px-4">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-10">
+        <h1 class="text-4xl md:text-5xl font-black mb-3 text-white">Ruang Diskusi Saya</h1>
+        <p class="text-indigo-200 text-lg">Journal perjalanan RISE mu</p>
+        <div class="mt-4 inline-flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full">
+          <span class="text-white font-semibold" id="total-diskusi">0</span>
+          <span class="text-indigo-200">Diskusi</span>
+        </div>
+      </div>
+
+      <div id="loading" class="text-center py-20">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+        <p class="text-indigo-200">Memuat...</p>
+      </div>
+
+      <div id="diskusi-container" class="grid gap-6 hidden"></div>
+
+      <div id="empty-state" class="text-center py-20 hidden">
+        <div class="bg-white/10 rounded-full p-8 inline-block mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2l3.293-3.293a2 2 0 112.828 2.828z" /></svg>
+        </div>
+        <h3 class="text-xl font-semibold text-white mb-2">Belum ada diskusi</h3>
+        <p class="text-indigo-200 mb-6">Mulai journey RISE mu sekarang!</p>
+        <a href="rise-form.html" class="inline-block bg-blue-500 text-white px-8 py-3 rounded-full font-semibold hover:bg-blue-600 transition">Isi RISE Sekarang</a>
+      </div>
+
+      <div class="text-center mt-10">
+        <a href="rise-form.html" class="inline-flex items-center gap-2 bg-white text-indigo-900 px-8 py-4 rounded-full font-bold hover:bg-indigo-50 transition shadow-xl">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+          Tambah Diskusi Baru
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const session = localStorage.getItem('rise_session');
+    if (!session) {
+      window.location.href = 'login.html';
+    }
+
+    document.getElementById('username-display').textContent = session;
+    document.getElementById('logout-button').addEventListener('click', logout);
+    document.getElementById('mobile-logout').addEventListener('click', logout);
+    document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+      document.getElementById('mobile-menu').classList.toggle('hidden');
+    });
+
+    document.addEventListener('DOMContentLoaded', loadDiskusi);
+
+    function logout() {
+      localStorage.removeItem('rise_session');
+      window.location.href = 'login.html';
+    }
+
+    function loadDiskusi() {
+      const allData = JSON.parse(localStorage.getItem('rise_diskusi_' + session) || '[]');
+      const container = document.getElementById('diskusi-container');
+      const loading = document.getElementById('loading');
+      const empty = document.getElementById('empty-state');
+
+      document.getElementById('total-diskusi').textContent = allData.length;
+      loading.classList.add('hidden');
+
+      if (allData.length === 0) {
+        empty.classList.remove('hidden');
+        container.classList.add('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      container.classList.remove('hidden');
+      container.innerHTML = '';
+
+      allData.reverse().forEach((data, index) => {
+        const card = document.createElement('div');
+        card.className = 'card-glass rounded-2xl p-6 card-hover fade-in';
+        card.style.animationDelay = `${index * 0.08}s`;
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h3 class="text-lg font-bold text-indigo-900">${data.identitas?.nama || session}</h3>
+              <p class="text-sm text-gray-500">${data.identitas?.kampus || '-'} • ${data.identitas?.prodi || '-'}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-400">${formatWaktu(new Date(data.timestamp))}</p>
+            </div>
+          </div>
+
+          <div class="grid gap-4">
+            <div class="bg-red-50 rounded-xl p-4 border-l-4 border-red-400">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="bg-red-400 text-white text-xs font-bold px-2 py-1 rounded">R</span>
+                <span class="font-semibold text-red-700">Reality</span>
+              </div>
+              <p class="text-gray-700 text-sm">${data.reality}</p>
+            </div>
+            <div class="bg-blue-50 rounded-xl p-4 border-l-4 border-blue-400">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="bg-blue-400 text-white text-xs font-bold px-2 py-1 rounded">I</span>
+                <span class="font-semibold text-blue-700">Insight</span>
+              </div>
+              <p class="text-gray-700 text-sm">${data.insight}</p>
+            </div>
+            <div class="bg-green-50 rounded-xl p-4 border-l-4 border-green-400">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="bg-green-400 text-white text-xs font-bold px-2 py-1 rounded">S</span>
+                <span class="font-semibold text-green-700">Skill</span>
+              </div>
+              <p class="text-gray-700 text-sm"><strong>Hard (sudah dimiliki):</strong> ${data.hard_skill_have || data.hard_skill}</p>
+              <p class="text-gray-700 text-sm"><strong>Soft (sudah dimiliki):</strong> ${data.soft_skill_have || data.soft_skill}</p>
+              <p class="text-gray-700 text-sm mt-3"><strong>Hard (ingin dicapai):</strong> ${data.hard_skill_goal || ''}</p>
+              <p class="text-gray-700 text-sm"><strong>Soft (ingin dicapai):</strong> ${data.soft_skill_goal || ''}</p>
+            </div>
+            <div class="bg-purple-50 rounded-xl p-4 border-l-4 border-purple-400">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="bg-purple-400 text-white text-xs font-bold px-2 py-1 rounded">E</span>
+                <span class="font-semibold text-purple-700">Expectation</span>
+              </div>
+              <p class="text-gray-700 text-sm">${data.target}</p>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-gray-100">
+            <button onclick="toggleAiSummary(this)" class="inline-flex items-center gap-2 text-sm text-indigo-700 hover:text-indigo-900 transition font-semibold">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16h6M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" /></svg>
+              <span>Ringkas & Diskusi AI</span>
+            </button>
+            <div class="ai-panel hidden mt-4 rounded-2xl bg-slate-50 p-4 border border-slate-200">
+              <div class="ai-summary text-sm text-slate-700"></div>
+              <div class="ai-chat-history max-h-52 overflow-y-auto space-y-3 mt-4"></div>
+              <div class="ai-response hidden mt-4 p-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-700"></div>
+              <div class="mt-4 grid gap-3">
+                <textarea rows="2" placeholder="Tanyakan ke asisten AI ..." class="ai-question w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-300 focus:outline-none"></textarea>
+                <button onclick="sendAiReply(this)" class="w-full inline-flex justify-center items-center gap-2 rounded-full bg-indigo-600 text-white px-4 py-3 text-sm font-semibold hover:bg-indigo-700 transition">Jawab AI</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+            <button onclick="downloadImage(this)" class="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 transition">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              Download JPG
+            </button>
+          </div>
+        `;
+
+        card.dataset.riseData = JSON.stringify(data);
+        container.appendChild(card);
+      });
+    }
+
+    function formatWaktu(date) {
+      const now = new Date();
+      const diff = now - date;
+      const menit = Math.floor(diff / 60000);
+      const jam = Math.floor(diff / 3600000);
+      const hari = Math.floor(diff / 86400000);
+
+      if (menit < 1) return 'Baru saja';
+      if (menit < 60) return `${menit} menit yang lalu`;
+      if (jam < 24) return `${jam} jam yang lalu`;
+      return `${hari} hari yang lalu`;
+    }
+
+    function toggleAiSummary(button) {
+      const card = button.closest('.card-glass');
+      const panel = card.querySelector('.ai-panel');
+      panel.classList.toggle('hidden');
+      if (!panel.classList.contains('hidden')) {
+        const data = JSON.parse(card.dataset.riseData || '{}');
+        const summary = card.querySelector('.ai-summary');
+        const recommendation = buildCareerRecommendation(data);
+        if (data.ai_chat && data.ai_chat.length > 0) {
+          summary.innerHTML = `<div style="font-weight:700; margin-bottom:8px;">Ringkasan AI berdasarkan RISE Anda:</div>${recommendation}`;
+        } else {
+          summary.innerHTML = `<div style="font-weight:700; margin-bottom:8px;">AI telah menganalisis RISE Anda:</div>${recommendation}`;
+        }
+        renderAiChatHistory(card, data.ai_chat || []);
+      }
+    }
+
+    function sendAiReply(button) {
+      const card = button.closest('.card-glass');
+      const questionInput = card.querySelector('.ai-question');
+      const responseBox = card.querySelector('.ai-response');
+      const question = questionInput.value.trim();
+      if (!question) return;
+
+      const storedData = JSON.parse(card.dataset.riseData || '{}');
+      storedData.ai_chat = storedData.ai_chat || [];
+      storedData.ai_chat.push({ sender: 'user', message: question });
+
+      const answer = generateAIReply(question, storedData);
+      storedData.ai_chat.push({ sender: 'bot', message: answer });
+      if (responseBox) {
+        responseBox.textContent = '';
+        responseBox.classList.add('hidden');
+      }
+      questionInput.value = '';
+      saveAiChatData(storedData);
+      card.dataset.riseData = JSON.stringify(storedData);
+      renderAiChatHistory(card, storedData.ai_chat);
+      const summary = card.querySelector('.ai-summary');
+      if (summary) {
+        summary.textContent = 'AI sudah menjawab. Lihat diskusi di bawah untuk detail dan contoh karir.';
+      }
+    }
+
+    function renderAiChatHistory(card, aiChat) {
+      const history = card.querySelector('.ai-chat-history');
+      const responseBox = card.querySelector('.ai-response');
+      if (responseBox) {
+        responseBox.classList.add('hidden');
+      }
+      history.innerHTML = '';
+      if (!aiChat || aiChat.length === 0) {
+        history.innerHTML = '<div class="text-sm text-slate-500">Belum ada chat AI. Tanyakan sesuatu untuk mulai.</div>';
+        return;
+      }
+      aiChat.forEach(item => {
+        const message = document.createElement('div');
+        message.className = item.sender === 'user' ? 'bg-blue-50 border border-blue-100 rounded-2xl p-3 text-sm text-slate-800' : 'bg-white border border-slate-200 rounded-2xl p-3 text-sm text-slate-800';
+        message.innerHTML = `<strong>${item.sender === 'user' ? 'Anda' : 'Asisten AI'}:</strong><br>${item.message}`;
+        history.appendChild(message);
+      });
+    }
+
+    function saveAiChatData(updatedData) {
+      const allData = JSON.parse(localStorage.getItem('rise_diskusi_' + session) || '[]');
+      const index = allData.findIndex(item => item.timestamp === updatedData.timestamp);
+      if (index >= 0) {
+        allData[index] = updatedData;
+      } else {
+        allData.push(updatedData);
+      }
+      localStorage.setItem('rise_diskusi_' + session, JSON.stringify(allData));
+    }
+
+    function generateAIReply(question, data) {
+      const aiContext = summarizeRiseData(data);
+      const suggestionBlock = buildCareerRecommendation(data);
+      const lower = question.toLowerCase();
+
+      const opening = `Berdasarkan jawaban RISE kamu, saya melihat beberapa kekuatan utama dan arah karir yang cocok. ${aiContext.summary}`;
+      const advice = `Saya sarankan untuk fokus pada: ${aiContext.focus}.`;
+      const closing = `Jika kamu ingin, saya bisa bantu membuat contoh jawaban lamaran atau ringkasan profil berdasarkan data ini.`;
+
+      if (lower.includes('kerja') || lower.includes('bidang') || lower.includes('cocok') || lower.includes('pekerjaan')) {
+        return `<div style="line-height:1.8;">${opening}<br><br>${suggestionBlock}<br>${advice}<br><br>${closing}</div>`;
+      }
+
+      if (lower.includes('bagaimana') || lower.includes('apa yang harus') || lower.includes('saran') || lower.includes('langkah')) {
+        return `<div style="line-height:1.8;">${opening}<br><br>${suggestionBlock}<br><br>${advice}<br><br>${closing}</div>`;
+      }
+
+      return `<div style="line-height:1.8;">${opening}<br><br>${suggestionBlock}<br><br>${advice}<br><br>${closing}</div>`;
+    }
+
+    function summarizeRiseData(data) {
+      const text = `${data.reality || ''} ${data.insight || ''} ${data.hard_skill_have || data.hard_skill || ''} ${data.soft_skill_have || data.soft_skill || ''} ${data.hard_skill_goal || ''} ${data.soft_skill_goal || ''} ${data.target || ''}`.toLowerCase();
+      const points = [];
+      const focus = [];
+
+      if (data.reality) points.push(`Reality kamu menunjukkan: ${data.reality}`);
+      if (data.insight) points.push(`Insight kamu menunjukkan: ${data.insight}`);
+      if (data.hard_skill_have) points.push(`Hard skill yang sudah kamu miliki: ${data.hard_skill_have}`);
+      if (data.soft_skill_have) points.push(`Soft skill yang sudah kamu miliki: ${data.soft_skill_have}`);
+      if (data.hard_skill_goal) points.push(`Hard skill yang ingin kamu capai: ${data.hard_skill_goal}`);
+      if (data.soft_skill_goal) points.push(`Soft skill yang ingin kamu capai: ${data.soft_skill_goal}`);
+      if (data.target) points.push(`Target kamu: ${data.target}`);
+
+      if (text.includes('laptop') || text.includes('service') || text.includes('komputer') || text.includes('perbaikan')) {
+        focus.push('perbaikan perangkat, instalasi, dan support teknis');
+      }
+      if (text.includes('komunikasi') || text.includes('tim') || text.includes('pelanggan') || text.includes('customer')) {
+        focus.push('layanan pelanggan dan koordinasi tim');
+      }
+      if (text.includes('digital') || text.includes('konten') || text.includes('desain') || text.includes('kreatif')) {
+        focus.push('media digital, konten, atau layanan kreatif');
+      }
+      if (text.includes('data') || text.includes('analisis') || text.includes('program') || text.includes('kode') || text.includes('sistem')) {
+        focus.push('analisis data, programming, atau pengujian sistem');
+      }
+      if (focus.length === 0) {
+        focus.push('mencari peran yang seimbang antara tugas administratif, komunikasi, dan dukungan teknis');
+      }
+
+      return {
+        summary: points.join(' '),
+        focus: [...new Set(focus)].join(', ')
+      };
+    }
+
+    function buildCareerRecommendation(data) {
+      const text = `${data.reality || ''} ${data.insight || ''} ${data.hard_skill_have || data.hard_skill || ''} ${data.soft_skill_have || data.soft_skill || ''} ${data.hard_skill_goal || ''} ${data.soft_skill_goal || ''} ${data.target || ''}`.toLowerCase();
+      const suggestions = [];
+      const reasons = [];
+
+      if (text.includes('laptop') || text.includes('service') || text.includes('perbaikan') || text.includes('komputer')) {
+        suggestions.push('Teknisi Service Laptop / Komputer');
+        reasons.push('kamu menyebut pengalaman servis dan perangkat komputer');
+      }
+      if (text.includes('komunikasi') || text.includes('tim') || text.includes('customer') || text.includes('pelanggan')) {
+        suggestions.push('Customer Service / Support IT');
+        reasons.push('kamu kuat dalam komunikasi dan melayani pelanggan');
+      }
+      if (text.includes('digital') || text.includes('konten') || text.includes('desain') || text.includes('kreatif')) {
+        suggestions.push('Content Creator / Marketing Digital / UI Support');
+        reasons.push('kamu tertarik pada konten digital dan desain kreatif');
+      }
+      if (text.includes('data') || text.includes('analisis') || text.includes('program') || text.includes('kode') || text.includes('sistem')) {
+        suggestions.push('Data Analyst / Junior Programmer / QA Tester');
+        reasons.push('kamu menunjukkan minat pada data, analisis, dan pemrograman');
+      }
+      if (suggestions.length === 0) {
+        suggestions.push('Admin Kantor, Customer Service, atau Asisten IT');
+        reasons.push('kamu cocok di peran yang fleksibel dan mendukung operasional');
+      }
+
+      const uniqueSuggestions = [...new Set(suggestions)];
+      const bullets = uniqueSuggestions.map(item => `<li style="margin-bottom: 6px;">${item}</li>`).join('');
+      const reasonSentence = reasons.length > 0 ? `Alasan: ${reasons.join('; ')}.` : 'Alasan: data kamu menunjukkan kecocokan di beberapa area utama.';
+
+      return `
+        <div style="margin-bottom: 10px;font-size:14px;">
+          ${reasonSentence}
+        </div>
+        <div style="margin-bottom: 10px;font-size:14px;font-weight:700;">Rekomendasi posisi:</div>
+        <ul style="padding-left: 18px; margin: 0 0 12px 0;">
+          ${bullets}
+        </ul>
+      `;
+    }
+
+    function downloadImage(button) {
+      const card = button.closest('.card-glass');
+      const clone = card.cloneNode(true);
+      const wrapper = document.createElement('div');
+
+      clone.querySelector('.card-hover')?.classList.remove('card-hover');
+      clone.querySelector('.fade-in')?.classList.remove('fade-in');
+      clone.querySelector('.ai-question')?.remove();
+      clone.querySelector('button[onclick="sendAiReply(this)"]')?.remove();
+      clone.querySelector('button[onclick="toggleAiSummary(this)"]')?.remove();
+      clone.querySelector('button[onclick="downloadImage(this)"]')?.remove();
+      clone.querySelector('.ai-panel')?.classList.remove('hidden');
+      clone.querySelector('.ai-response')?.classList.remove('hidden');
+
+      const summary = clone.querySelector('.ai-summary');
+      if (summary) {
+        const data = JSON.parse(card.dataset.riseData || '{}');
+        summary.innerHTML = buildCareerRecommendation(data);
+      }
+
+      wrapper.style.position = 'absolute';
+      wrapper.style.left = '-9999px';
+      wrapper.style.top = '0';
+      wrapper.style.width = '794px';
+      wrapper.style.padding = '16mm';
+      wrapper.style.boxSizing = 'border-box';
+      wrapper.style.background = '#ffffff';
+      wrapper.style.color = '#111827';
+      wrapper.style.fontFamily = 'Inter, sans-serif';
+      wrapper.style.pointerEvents = 'none';
+
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
+
+      setTimeout(() => {
+        html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+          const link = document.createElement('a');
+          link.href = canvas.toDataURL('image/jpeg', 0.95);
+          link.download = `RISE-${session}-${Date.now()}.jpg`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          wrapper.remove();
+        }).catch(() => {
+          wrapper.remove();
+        });
+      }, 300);
+    }
+  </script>
+</body>
+</html>
